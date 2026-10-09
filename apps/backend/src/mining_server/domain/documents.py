@@ -68,6 +68,7 @@ class ParsedPage(Contract):
     text: str
     width: float = Field(gt=0)
     height: float = Field(gt=0)
+    tables: list[list[list[str | None]]] | None = None
 
 
 class ParsedDocument(Contract):

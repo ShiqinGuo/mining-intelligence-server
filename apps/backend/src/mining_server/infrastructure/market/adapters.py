@@ -1,4 +1,3 @@
-import asyncio
 import re
 from calendar import Month, monthrange
 from dataclasses import dataclass
@@ -9,7 +8,6 @@ from urllib.parse import urljoin, urlsplit, urlunsplit
 from zoneinfo import ZoneInfo
 
 import httpx
-import pymupdf
 from bs4 import BeautifulSoup
 from mining_contracts.domain.core import ErrorCode, ErrorDetails
 from mining_contracts.domain.http import HttpScheme
@@ -17,6 +15,7 @@ from mining_contracts.domain.market import PriceAdapter, PriceInstrument, PriceP
 from pydantic import TypeAdapter, ValidationError
 
 from mining_server.domain.core import fail
+from mining_server.domain.documents import ParsedPage
 from mining_server.domain.market import (
     MarketBatch,
     MarketLimits,
@@ -29,6 +28,8 @@ from mining_server.domain.market import (
     SinaDay,
 )
 from mining_server.infrastructure.documents.http import PublicHttpClient
+from mining_server.infrastructure.documents.parser import PdfParser
+from mining_server.infrastructure.documents.storage import DocumentStorage
 from mining_server.infrastructure.news.html import element_attributes
 
 
@@ -53,21 +54,50 @@ class ReportDateRules:
 
 
 def parse_pls_report(
-    data: bytes, instrument: PriceInstrument, fetched_at: datetime, source_url: str
+    page: ParsedPage, instrument: PriceInstrument, fetched_at: datetime, source_url: str
 ) -> MarketBatch:
-    with pymupdf.open(stream=data, filetype="pdf") as document:
-        text = document[0].get_text()
+    text = page.text
     published_match = re.search(r"(\d{1,2})\s+(July|October)\s+(20\d{2})", text)
     columns = re.findall(r"(Jun|Mar|Sep)\s+Q\s+FY(\d{2})", text)
-    values_match = re.search(r"US\$/t\s+SC6\s+(\d+)\s+(\d+)", text)
+    if page.tables is None:
+        raise fail(ErrorCode.UPSTREAM_FAILURE, "PLS report has no table extraction")
+    price_rows = [
+        row
+        for table in page.tables
+        for row in table
+        if any(
+            cell is not None and re.fullmatch(r"US\$/t\s+SC6", cell.strip())
+            for cell in row
+        )
+    ]
     if (
         published_match is None
         or len(columns) < ReportDateRules().quarter_count
-        or values_match is None
+        or len(price_rows) != 1
     ):
         raise fail(
             ErrorCode.UPSTREAM_FAILURE, "PLS report lacks a verified SC6 quarter table"
         )
+    row = price_rows[0]
+    unit_column = next(
+        index
+        for index, cell in enumerate(row)
+        if cell is not None and re.fullmatch(r"US\$/t\s+SC6", cell.strip())
+    )
+    values = []
+    for cell in row[
+        unit_column + 1 : unit_column + 1 + ReportDateRules().quarter_count
+    ]:
+        match = (
+            re.fullmatch(r"(\d+)(?:<sup>[^<]+</sup>)?", cell.strip())
+            if cell is not None
+            else None
+        )
+        if match is None:
+            raise fail(ErrorCode.UPSTREAM_FAILURE, "PLS SC6 table has an invalid price")
+        values.append(match.group(1))
+    if len(values) != ReportDateRules().quarter_count:
+        raise fail(ErrorCode.UPSTREAM_FAILURE, "PLS SC6 table has missing quarters")
     day, month, year = published_match.groups()
     match ReportPublicationMonth(month):
         case ReportPublicationMonth.JULY:
@@ -82,7 +112,7 @@ def parse_pls_report(
     )
     points = []
     for (quarter, fiscal_year), value in zip(
-        columns[: ReportDateRules().quarter_count], values_match.groups(), strict=True
+        columns[: ReportDateRules().quarter_count], values, strict=True
     ):
         year = (
             ReportDateRules().year_century
@@ -327,9 +357,15 @@ def parse_spodumene_article(
 
 class MarketHttpAdapter:
     def __init__(
-        self, client: httpx.AsyncClient, max_bytes: int = MarketLimits().response_bytes
+        self,
+        client: httpx.AsyncClient,
+        storage: DocumentStorage,
+        parser: PdfParser,
+        max_bytes: int = MarketLimits().response_bytes,
     ):
         self.client = client
+        self.storage = storage
+        self.parser = parser
         self.max_bytes = max_bytes
 
     async def read(self, url: str, params: MarketQuery | None = None) -> MarketFetch:
@@ -453,9 +489,14 @@ class MarketHttpAdapter:
                     response = await PublicHttpClient(
                         MarketLimits().public_timeout_seconds
                     ).get(url, MarketLimits().report_bytes)
-                    batch = await asyncio.to_thread(
-                        parse_pls_report,
-                        response.data,
+
+                    async def chunks(data: bytes):
+                        yield data
+
+                    stored = await self.storage.store(chunks(response.data))
+                    parsed = await self.parser.parse(self.storage.path(stored.sha256))
+                    batch = parse_pls_report(
+                        parsed.pages[0],
                         instrument,
                         fetched_at,
                         response.final_url,

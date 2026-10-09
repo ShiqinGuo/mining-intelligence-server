@@ -1,16 +1,25 @@
 {
   "mcpServers": {
     "mining-news": {
+      "type": "http",
       "url": "http://127.0.0.1:28111/mcp/news/",
-      "headers": {"Authorization": "Bearer REPLACE_WITH_MINING_SERVICE_TOKEN"}
+      "headers": {
+        "Authorization": "Bearer ${MINING_SERVICE_TOKEN}"
+      }
     },
     "mining-documents": {
+      "type": "http",
       "url": "http://127.0.0.1:28111/mcp/documents/",
-      "headers": {"Authorization": "Bearer REPLACE_WITH_MINING_SERVICE_TOKEN"}
+      "headers": {
+        "Authorization": "Bearer ${MINING_SERVICE_TOKEN}"
+      }
     },
     "mining-market": {
+      "type": "http",
       "url": "http://127.0.0.1:28111/mcp/market/",
-      "headers": {"Authorization": "Bearer REPLACE_WITH_MINING_SERVICE_TOKEN"}
+      "headers": {
+        "Authorization": "Bearer ${MINING_SERVICE_TOKEN}"
+      }
     }
   }
 }

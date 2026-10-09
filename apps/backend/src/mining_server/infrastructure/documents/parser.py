@@ -23,6 +23,7 @@ from mining_server.domain.pdf import (
     ParserOperation,
     PdfLimits,
 )
+from mining_server.infrastructure.documents.layout import extract_pdf_page
 
 
 def write_pdf_manifest(
@@ -49,7 +50,8 @@ def write_pdf_manifest(
                 )
             for index in range(document.page_count):
                 page = document.load_page(index)
-                text = page.get_text("text", sort=True)
+                extraction = extract_pdf_page(page)
+                text = extraction.text
                 characters += len(text)
                 if len(text) > limits.page_chars or characters > limits.total_chars:
                     raise fail(
@@ -60,6 +62,7 @@ def write_pdf_manifest(
                     text=text,
                     width=page.rect.width,
                     height=page.rect.height,
+                    tables=extraction.tables,
                 )
                 line = parsed.model_dump_json().encode("utf-8") + b"\n"
                 if len(line) > limits.line_bytes:
@@ -88,10 +91,8 @@ def read_pdf_table(path: str, page_number: int, limits: PdfLimits) -> TableResul
     with pymupdf.open(path, filetype="pdf") as document:
         if page_number < 1 or page_number > min(document.page_count, limits.max_pages):
             raise fail(ErrorCode.INVALID_INPUT, "Requested PDF page does not exist")
-        tables = document[page_number - 1].find_tables()
-        return TableResult(
-            page_number=page_number, tables=[table.extract() for table in tables.tables]
-        )
+        extraction = extract_pdf_page(document[page_number - 1])
+        return TableResult(page_number=page_number, tables=extraction.tables)
 
 
 def render_pdf_page(path: str, page_number: int, limits: PdfLimits) -> RenderedPage:

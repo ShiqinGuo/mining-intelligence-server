@@ -29,6 +29,8 @@ from mining_server.domain.market import (
 )
 from mining_server.domain.tasks import TaskOutcome
 from mining_server.infrastructure.database import Database
+from mining_server.infrastructure.documents.parser import PdfParser
+from mining_server.infrastructure.documents.storage import DocumentStorage
 from mining_server.infrastructure.market.adapters import MarketHttpAdapter
 from mining_server.infrastructure.market.repository import MarketRepository
 from mining_server.infrastructure.settings import Settings
@@ -254,9 +256,9 @@ class MarketService:
             trust_env=True,
             follow_redirects=False,
         ) as client:
-            return await MarketHttpAdapter(client).collect(
-                payload.instrument, payload.start, payload.end
-            )
+            return await MarketHttpAdapter(
+                client, DocumentStorage(self.settings.data_dir), PdfParser()
+            ).collect(payload.instrument, payload.start, payload.end)
 
     async def schedule_due(self, moment: datetime | None = None) -> None:
         current = moment or datetime.now(UTC)

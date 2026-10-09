@@ -40,3 +40,8 @@ class ParsedPdfManifest(Contract):
 
 class ParsedPageBatch(Contract):
     pages: list[ParsedPage] = Field(min_length=1, max_length=20)
+
+
+class PdfPageExtraction(Contract):
+    text: str
+    tables: list[list[list[str | None]]]
