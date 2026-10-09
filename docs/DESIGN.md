@@ -48,7 +48,11 @@ MCP 使用 `2026-07-28` 新协议及官方 Python SDK 已核验的 v2.3.0 基线
 
 公网接入沿用本地 Docker，通过可选 `compose.tunnel.yaml` 启动独立 cloudflared 连接器。Tunnel token 从仓库外文件挂载为 Docker secret；Gateway 仅持有业务 service token。`MINING_PUBLIC_ORIGINS` 接受精确 HTTPS origin，构造时拒绝路径、用户信息、查询、fragment 和通配符；保留 SDK 的 Host/Origin 校验与 Bearer 认证。公网路由仅匹配三个 MCP 入口，管理 API 和健康接口不发布。PG 与 RabbitMQ 设置 `unless-stopped`，Docker 重启后恢复基础设施容器，持久化卷保持不变。
 
-2026-10-09 已创建专用 Tunnel `mining-intelligence-local`，DNS 与 `mining-mcp.charworkservice.site` 路由已保存，路径限定 `^/mcp/(news|documents|market)/?$`，目标 `http://mcp-gateway:8001`。当前公网通道尚未上线：本机常规 DNS 缺少 Tunnel SRV 结果，绕过发现步骤的有界诊断仍在 edge TLS 握手收到 EOF，QUIC 超时；现有 SOCKS 出口也复现 TLS EOF。已撤下诊断覆盖配置，连接器使用正式 Compose 配置。需网络链路恢复后完成公网 SDK 握手、认证与业务查询验收，不能将路由创建计作接通。
+2026-10-09 专用 Tunnel `mining-intelligence-local` 已接通本地 Docker，四条 HTTP2 连接已注册；`mining-mcp.charworkservice.site` 路径限定 `^/mcp/(news|documents|market)/?$`，目标 `http://mcp-gateway:8001`。三个公网入口均经官方 SDK 的 `server/discover` 协商为 `2026-07-28`，各发现三个工具，新闻查询返回十篇文章、七个信源，行情查询返回六个品种。三个入口未带 token 均为 401，`/docs`、`/health/live`、`/api/v1/settings` 与其他 MCP 路径均为 404；独立验证旧版握手也可连接。
+
+本机常规 DNS 缺少 Tunnel SRV 结果，直接发送 TLS ClientHello 在 edge 握手收到 EOF，QUIC 超时；现有 SOCKS 出口也复现 EOF。正确域名与官方 CA 的严格 TLS 探测在将 ClientHello 分成小 TCP 片段后重复通过。本机连接器使用独立透明 TCP relay 与局部 edge 地址覆盖，relay 不终止 TLS、不读取凭据、不挂载业务数据，仅转发原始字节。配置与镜像构建源保存在用户运行目录，默认 Compose 保持通用。Docker 重启后 Windows 文件 bind mount 曾被识别为目录，本机凭据改为经 Docker 文件复制写入私有命名卷并只读挂载；默认 Tunnel 配置仍使用文件 secret。
+
+本机访问公网域名也受 TLS 干扰，公网 SDK 验收通过仅允许该域名的临时 loopback CONNECT 转发完成，仍使用真实 HTTPS URL、默认域名及证书校验；临时进程在验收后停止。该验收不代表所有客户端所在网络均能直接访问；同机客户端可继续连接本地 Gateway。公网入口的可用性取决于本机 Docker、网络和连接器持续运行。
 
 ## 3 工程契约与数据
 

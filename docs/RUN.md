@@ -26,7 +26,7 @@ docker compose -p code4interview-server up -d --build
 
 支持 Streamable HTTP 的 Agent 均可连接。参照 [MCP 配置示例](../mcp-config.json)，将三个地址添加到所用 Agent 的 MCP 配置，并设置请求头 `Authorization: Bearer <MINING_SERVICE_TOKEN>`。token 来自本项目私有 `.env`，不要使用管理员 token；示例 JSON 的结构需按实际客户端格式调整。
 
-如果作者的公开入口已提供，不想自行部署或维护定时采集任务的用户可通过 Cloudflare Tunnel 直接连接作者的公开 MCP 服务。
+不想自行部署项目和运行定时采集任务，可以直接接入作者通过 Cloudflare Tunnel 提供的公网 MCP 服务：将三个 MCP 地址的 `http://127.0.0.1:28111` 替换为 `https://mining-mcp.charworkservice.site`，service token 向作者获取。
 
 可以把下面的提示词交给能够修改自身配置的 Agent，并通过其私有凭据方式提供 service token：
 
