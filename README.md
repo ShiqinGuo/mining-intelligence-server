@@ -1,4 +1,6 @@
-# Mining Server
+# Mining Intelligence Server
+
+仓库：[ShiqinGuo/mining-intelligence-server](https://github.com/ShiqinGuo/mining-intelligence-server)。
 
 独立的矿业 HTTP 业务服务与 MCP Gateway。新闻、技术报告和行情由业务后端处理，通用 Agent 通过三个 MCP server 接入。
 
