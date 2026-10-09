@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "mining-news": {
+      "url": "http://127.0.0.1:28111/mcp/news/",
+      "headers": {"Authorization": "Bearer REPLACE_WITH_MINING_SERVICE_TOKEN"}
+    },
+    "mining-documents": {
+      "url": "http://127.0.0.1:28111/mcp/documents/",
+      "headers": {"Authorization": "Bearer REPLACE_WITH_MINING_SERVICE_TOKEN"}
+    },
+    "mining-market": {
+      "url": "http://127.0.0.1:28111/mcp/market/",
+      "headers": {"Authorization": "Bearer REPLACE_WITH_MINING_SERVICE_TOKEN"}
+    }
+  }
+}

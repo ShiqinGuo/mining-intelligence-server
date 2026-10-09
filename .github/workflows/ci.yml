@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_USER: mining_ci
+          POSTGRES_PASSWORD: mining_ci_ephemeral_password
+          POSTGRES_DB: mining_ci_migration
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mining_ci -d mining_ci_migration"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      rabbitmq:
+        image: rabbitmq:4.3.0-management-alpine
+        env:
+          RABBITMQ_DEFAULT_USER: mining_ci
+          RABBITMQ_DEFAULT_PASS: mining_ci_ephemeral_password
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      MINING_DATABASE_URL: postgresql+asyncpg://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5432/mining_ci_migration
+      MINING_TEST_DATABASE_URL: postgresql+asyncpg://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5432/mining_acceptance_test
+      MINING_NEWS_TEST_DATABASE_URL: postgresql+asyncpg://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5432/mining_acceptance_test
+      MINING_AUTH_TEST_DATABASE_URL: postgresql+asyncpg://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5432/mining_acceptance_test
+      MINING_DOCUMENTS_TEST_DATABASE_URL: postgresql+asyncpg://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5432/mining_documents_test
+      MINING_TYPED_MIGRATION_TEST_DATABASE_URL: postgresql+asyncpg://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5432/mining_typed_migration_test
+      MINING_BROKER_URL: amqp://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5672//
+      MINING_TEST_BROKER_URL: amqp://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5672//
+      MINING_REPORT_FIXTURE_DIR: ${{ runner.temp }}/mining-public-pdf-fixtures
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.9'
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Lint
+        run: uv run --no-sync ruff check .
+      - name: Generate ephemeral application credentials
+        run: uv run --no-sync python scripts/init_env.py
+      - name: Create dedicated integration databases
+        run: |
+          for database in mining_acceptance_test mining_documents_test mining_typed_migration_test; do
+            docker exec "${{ job.services.postgres.id }}" createdb -U mining_ci "$database"
+          done
+      - name: Check migrations against a separate empty database
+        run: |
+          uv run --no-sync alembic upgrade head
+          uv run --no-sync alembic check
+      - name: Cache reviewed public PDF fixtures
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: ${{ runner.temp }}/mining-public-pdf-fixtures
+          key: mining-pdf-${{ runner.os }}-${{ hashFiles('tests/fixtures/document-golden.json') }}
+      - name: Download and verify public PDF fixtures
+        run: uv run --no-sync python scripts/ci.py fixtures
+      - name: Run full suite and reject all skipped tests
+        run: uv run --no-sync python scripts/ci.py test
+      - name: Remove ephemeral credentials
+        if: always()
+        run: rm -f .env
+
+  docker-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          version: '0.10.9'
+          enable-cache: true
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Generate ephemeral application credentials
+        run: uv run --no-sync python scripts/init_env.py
+      - name: Build and start isolated deployment
+        run: docker compose --project-name mining-ci up --build --wait --wait-timeout 300
+      - name: Verify health and three real MCP SDK connections
+        run: uv run --no-sync python scripts/ci.py smoke
+      - name: Inspect failed containers
+        if: failure()
+        run: |
+          docker compose --project-name mining-ci ps -a
+          docker compose --project-name mining-ci logs --no-color --tail 200
+      - name: Remove isolated deployment and credentials
+        if: always()
+        run: |
+          docker compose --project-name mining-ci down --volumes --remove-orphans
+          rm -f .env

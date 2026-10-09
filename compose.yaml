@@ -1,0 +1,85 @@
+services:
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_DB: mining
+      POSTGRES_USER: mining
+      POSTGRES_PASSWORD: ${MINING_DATABASE_PASSWORD:?Set MINING_DATABASE_PASSWORD}
+    ports:
+      - "127.0.0.1:25432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mining -d mining"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  rabbitmq:
+    image: rabbitmq:4.3.0-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: mining
+      RABBITMQ_DEFAULT_PASS: ${MINING_BROKER_PASSWORD:?Set MINING_BROKER_PASSWORD}
+    ports:
+      - "127.0.0.1:35672:5672"
+      - "127.0.0.1:35673:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  mining-backend:
+    build: .
+    restart: on-failure
+    stop_grace_period: 30s
+    mem_limit: 2g
+    memswap_limit: 2g
+    pids_limit: 256
+    env_file:
+      - .env
+    environment:
+      MINING_DATABASE_URL: postgresql+asyncpg://mining:${MINING_DATABASE_PASSWORD}@postgres:5432/mining
+      MINING_BROKER_URL: amqp://mining:${MINING_BROKER_PASSWORD}@rabbitmq:5672//
+      MINING_ADMIN_TOKEN: ${MINING_ADMIN_TOKEN:?Set MINING_ADMIN_TOKEN}
+      MINING_SERVICE_TOKEN: ${MINING_SERVICE_TOKEN:?Set MINING_SERVICE_TOKEN}
+      MINING_MASTER_KEY: ${MINING_MASTER_KEY:?Set MINING_MASTER_KEY}
+      MINING_DATA_DIR: /data/mining
+    ports:
+      - "127.0.0.1:28110:8000"
+    volumes:
+      - mining_data:/data/mining
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+  mcp-gateway:
+    build: .
+    restart: on-failure
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 128
+    command: ["python", "-m", "uvicorn", "mining_server.gateway.app:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8001"]
+    environment:
+      MINING_BACKEND_URL: http://mining-backend:8000
+      MINING_SERVICE_TOKEN: ${MINING_SERVICE_TOKEN:?Set MINING_SERVICE_TOKEN}
+    ports:
+      - "127.0.0.1:28111:8001"
+    depends_on:
+      mining-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health/live', timeout=5)"]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  mining_data:

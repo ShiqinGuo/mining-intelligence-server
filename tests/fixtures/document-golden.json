@@ -1,0 +1,433 @@
+{
+  "reports": [
+    {
+      "filename": "sigma-2023.pdf",
+      "pdf_url": "https://sigmalithiumresources.com/wp-content/uploads/2023/05/2023-01-SGML-Updated-Technical-Report-1.pdf",
+      "sha256": "48845b0e0d4a88be5608ab6195e56c32837484e39797086d454bdf72ed0cb25a",
+      "page_count": 568,
+      "reporting_standard": "ni_43_101",
+      "expectations": [
+        {
+          "project_fragment": "Grota do Cirilo",
+          "deposit_fragment": "Xuxa",
+          "category": "indicated",
+          "scope": "in_situ",
+          "report_date": "2023-01-16",
+          "effective_date": "2019-01-10",
+          "tonnage": {
+            "value": "7221000",
+            "unit": "t",
+            "material": "ore"
+          },
+          "grade": [
+            {
+              "value": "1.49",
+              "unit": "%",
+              "material": "Li2O"
+            }
+          ],
+          "contained_materials": [
+            {
+              "value": "266.1",
+              "unit": "kt",
+              "material": "LCE"
+            }
+          ],
+          "cutoff": [
+            {
+              "value": "0.5",
+              "unit": "%",
+              "material": "Li2O"
+            }
+          ],
+          "source_pages": [
+            36,
+            219
+          ]
+        },
+        {
+          "project_fragment": "Grota do Cirilo",
+          "deposit_fragment": "Xuxa",
+          "category": "inferred",
+          "scope": "in_situ",
+          "report_date": "2023-01-16",
+          "effective_date": "2019-01-10",
+          "tonnage": {
+            "value": "3802000",
+            "unit": "t",
+            "material": "ore"
+          },
+          "grade": [
+            {
+              "value": "1.58",
+              "unit": "%",
+              "material": "Li2O"
+            }
+          ],
+          "contained_materials": [
+            {
+              "value": "148.6",
+              "unit": "kt",
+              "material": "LCE"
+            }
+          ],
+          "cutoff": [
+            {
+              "value": "0.5",
+              "unit": "%",
+              "material": "Li2O"
+            }
+          ],
+          "source_pages": [
+            36,
+            219
+          ]
+        }
+      ],
+      "absent_stockpile_inferred": false
+    },
+    {
+      "filename": "falchani-2023.pdf",
+      "pdf_url": "https://americanlithiumcorp.com/wp-content/uploads/2025/05/Falchani-NI43-101_Technical_Report_Final_12-14-23.pdf",
+      "sha256": "8dd185dbcb1d6fae2a3d6188185552f6e1c2b336f7bb3803e870a8eecd5b30a5",
+      "page_count": 106,
+      "reporting_standard": "ni_43_101",
+      "expectations": [
+        {
+          "project_fragment": "Falchani",
+          "deposit_fragment": null,
+          "category": "indicated",
+          "scope": "total",
+          "report_date": "2023-12-14",
+          "effective_date": "2023-10-31",
+          "tonnage": {
+            "value": "378",
+            "unit": "Mt",
+            "material": "ore"
+          },
+          "grade": [
+            {
+              "value": "2251",
+              "unit": "ppm",
+              "material": "Li"
+            }
+          ],
+          "contained_materials": [
+            {
+              "value": "0.85",
+              "unit": "Mt",
+              "material": "Li"
+            },
+            {
+              "value": "4.52",
+              "unit": "Mt",
+              "material": "Li2CO3"
+            }
+          ],
+          "cutoff": [
+            {
+              "value": "600",
+              "unit": "ppm",
+              "material": "Li"
+            }
+          ],
+          "source_pages": [
+            13,
+            88
+          ]
+        },
+        {
+          "project_fragment": "Falchani",
+          "deposit_fragment": null,
+          "category": "inferred",
+          "scope": "total",
+          "report_date": "2023-12-14",
+          "effective_date": "2023-10-31",
+          "tonnage": {
+            "value": "506",
+            "unit": "Mt",
+            "material": "ore"
+          },
+          "grade": [
+            {
+              "value": "1481",
+              "unit": "ppm",
+              "material": "Li"
+            }
+          ],
+          "contained_materials": [
+            {
+              "value": "0.75",
+              "unit": "Mt",
+              "material": "Li"
+            },
+            {
+              "value": "3.99",
+              "unit": "Mt",
+              "material": "Li2CO3"
+            }
+          ],
+          "cutoff": [
+            {
+              "value": "600",
+              "unit": "ppm",
+              "material": "Li"
+            }
+          ],
+          "source_pages": [
+            13,
+            88
+          ]
+        }
+      ],
+      "absent_stockpile_inferred": false
+    },
+    {
+      "filename": "pilgangoora-2025.pdf",
+      "pdf_url": "https://announcements.asx.com.au/asxpdf/20250611/pdf/06kmc3l7r1bjsm.pdf",
+      "sha256": "86e630e479590662e522617f975671ac2f84bfb890d93d61abae4832d8e91e89",
+      "page_count": 83,
+      "reporting_standard": "jorc",
+      "expectations": [
+        {
+          "project_fragment": "Pilgangoora",
+          "deposit_fragment": null,
+          "category": "indicated",
+          "scope": "in_situ",
+          "report_date": "2025-06-11",
+          "effective_date": "2025-03-31",
+          "tonnage": {
+            "value": "349",
+            "unit": "Mt",
+            "material": "ore"
+          },
+          "grade": [
+            {
+              "value": "1.29",
+              "unit": "%",
+              "material": "Li2O"
+            },
+            {
+              "value": "121",
+              "unit": "ppm",
+              "material": "Ta2O5"
+            }
+          ],
+          "contained_materials": [
+            {
+              "value": "4.5",
+              "unit": "Mt",
+              "material": "Li2O"
+            },
+            {
+              "value": "93",
+              "unit": "Mlb",
+              "material": "Ta2O5"
+            }
+          ],
+          "cutoff": [
+            {
+              "value": "0.2",
+              "unit": "%",
+              "material": "Li2O"
+            }
+          ],
+          "source_pages": [
+            2,
+            5
+          ]
+        },
+        {
+          "project_fragment": "Pilgangoora",
+          "deposit_fragment": null,
+          "category": "inferred",
+          "scope": "in_situ",
+          "report_date": "2025-06-11",
+          "effective_date": "2025-03-31",
+          "tonnage": {
+            "value": "70",
+            "unit": "Mt",
+            "material": "ore"
+          },
+          "grade": [
+            {
+              "value": "1.25",
+              "unit": "%",
+              "material": "Li2O"
+            },
+            {
+              "value": "134",
+              "unit": "ppm",
+              "material": "Ta2O5"
+            }
+          ],
+          "contained_materials": [
+            {
+              "value": "0.9",
+              "unit": "Mt",
+              "material": "Li2O"
+            },
+            {
+              "value": "21",
+              "unit": "Mlb",
+              "material": "Ta2O5"
+            }
+          ],
+          "cutoff": [
+            {
+              "value": "0.2",
+              "unit": "%",
+              "material": "Li2O"
+            }
+          ],
+          "source_pages": [
+            2,
+            5
+          ]
+        },
+        {
+          "project_fragment": "Pilgangoora",
+          "deposit_fragment": null,
+          "category": "indicated",
+          "scope": "stockpile",
+          "report_date": "2025-06-11",
+          "effective_date": "2025-03-31",
+          "tonnage": {
+            "value": "7",
+            "unit": "Mt",
+            "material": "ore"
+          },
+          "grade": [
+            {
+              "value": "0.93",
+              "unit": "%",
+              "material": "Li2O"
+            },
+            {
+              "value": "82",
+              "unit": "ppm",
+              "material": "Ta2O5"
+            }
+          ],
+          "contained_materials": [
+            {
+              "value": "0.1",
+              "unit": "Mt",
+              "material": "Li2O"
+            },
+            {
+              "value": "1",
+              "unit": "Mlb",
+              "material": "Ta2O5"
+            }
+          ],
+          "cutoff": [
+            {
+              "value": "0.2",
+              "unit": "%",
+              "material": "Li2O"
+            }
+          ],
+          "source_pages": [
+            2
+          ]
+        },
+        {
+          "project_fragment": "Pilgangoora",
+          "deposit_fragment": null,
+          "category": "indicated",
+          "scope": "total",
+          "report_date": "2025-06-11",
+          "effective_date": "2025-03-31",
+          "tonnage": {
+            "value": "356",
+            "unit": "Mt",
+            "material": "ore"
+          },
+          "grade": [
+            {
+              "value": "1.29",
+              "unit": "%",
+              "material": "Li2O"
+            },
+            {
+              "value": "120",
+              "unit": "ppm",
+              "material": "Ta2O5"
+            }
+          ],
+          "contained_materials": [
+            {
+              "value": "4.6",
+              "unit": "Mt",
+              "material": "Li2O"
+            },
+            {
+              "value": "94",
+              "unit": "Mlb",
+              "material": "Ta2O5"
+            }
+          ],
+          "cutoff": [
+            {
+              "value": "0.2",
+              "unit": "%",
+              "material": "Li2O"
+            }
+          ],
+          "source_pages": [
+            2
+          ]
+        },
+        {
+          "project_fragment": "Pilgangoora",
+          "deposit_fragment": null,
+          "category": "inferred",
+          "scope": "total",
+          "report_date": "2025-06-11",
+          "effective_date": "2025-03-31",
+          "tonnage": {
+            "value": "70",
+            "unit": "Mt",
+            "material": "ore"
+          },
+          "grade": [
+            {
+              "value": "1.25",
+              "unit": "%",
+              "material": "Li2O"
+            },
+            {
+              "value": "134",
+              "unit": "ppm",
+              "material": "Ta2O5"
+            }
+          ],
+          "contained_materials": [
+            {
+              "value": "0.9",
+              "unit": "Mt",
+              "material": "Li2O"
+            },
+            {
+              "value": "21",
+              "unit": "Mlb",
+              "material": "Ta2O5"
+            }
+          ],
+          "cutoff": [
+            {
+              "value": "0.2",
+              "unit": "%",
+              "material": "Li2O"
+            }
+          ],
+          "source_pages": [
+            2
+          ]
+        }
+      ],
+      "absent_stockpile_inferred": true
+    }
+  ]
+}
