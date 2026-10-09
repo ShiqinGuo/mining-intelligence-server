@@ -47,7 +47,6 @@ jobs:
       MINING_TYPED_MIGRATION_TEST_DATABASE_URL: postgresql+asyncpg://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5432/mining_typed_migration_test
       MINING_BROKER_URL: amqp://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5672//
       MINING_TEST_BROKER_URL: amqp://mining_ci:mining_ci_ephemeral_password@127.0.0.1:5672//
-      MINING_REPORT_FIXTURE_DIR: ${{ runner.temp }}/mining-public-pdf-fixtures
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -78,8 +77,12 @@ jobs:
           path: ${{ runner.temp }}/mining-public-pdf-fixtures
           key: mining-pdf-${{ runner.os }}-${{ hashFiles('tests/fixtures/document-golden.json') }}
       - name: Download and verify public PDF fixtures
+        env:
+          MINING_REPORT_FIXTURE_DIR: ${{ runner.temp }}/mining-public-pdf-fixtures
         run: uv run --no-sync python scripts/ci.py fixtures
       - name: Run full suite and reject all skipped tests
+        env:
+          MINING_REPORT_FIXTURE_DIR: ${{ runner.temp }}/mining-public-pdf-fixtures
         run: uv run --no-sync python scripts/ci.py test
       - name: Remove ephemeral credentials
         if: always()
