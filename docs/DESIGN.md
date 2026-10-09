@@ -46,6 +46,10 @@ BackendClient 使用具名方法，集中连接池、认证、超时、请求追
 
 MCP 使用 `2026-07-28` 新协议及官方 Python SDK 已核验的 v2.3.0 基线；实施时锁定依赖。首版采用普通工具返回业务 task_id，不要求 MCP Tasks 扩展。支持其他 Agent 的范围以实际客户端互通测试为准，不承诺所有历史版本。
 
+公网接入沿用本地 Docker，通过可选 `compose.tunnel.yaml` 启动独立 cloudflared 连接器。Tunnel token 从仓库外文件挂载为 Docker secret；Gateway 仅持有业务 service token。`MINING_PUBLIC_ORIGINS` 接受精确 HTTPS origin，构造时拒绝路径、用户信息、查询、fragment 和通配符；保留 SDK 的 Host/Origin 校验与 Bearer 认证。公网路由仅匹配三个 MCP 入口，管理 API 和健康接口不发布。PG 与 RabbitMQ 设置 `unless-stopped`，Docker 重启后恢复基础设施容器，持久化卷保持不变。
+
+2026-10-09 已创建专用 Tunnel `mining-intelligence-local`，DNS 与 `mining-mcp.charworkservice.site` 路由已保存，路径限定 `^/mcp/(news|documents|market)/?$`，目标 `http://mcp-gateway:8001`。当前公网通道尚未上线：本机常规 DNS 缺少 Tunnel SRV 结果，绕过发现步骤的有界诊断仍在 edge TLS 握手收到 EOF，QUIC 超时；现有 SOCKS 出口也复现 TLS EOF。已撤下诊断覆盖配置，连接器使用正式 Compose 配置。需网络链路恢复后完成公网 SDK 握手、认证与业务查询验收，不能将路由创建计作接通。
+
 ## 3 工程契约与数据
 
 源码和测试全英文，不写注释或 docstring；设计文档中文。封闭状态、类别、判别字段与错误码使用枚举，Literal 只引用枚举成员子集。开放的用户正文、URL 等仍是经校验的字符串。跨层 Request、Response、任务载荷、步骤结果、检查点和错误详情在 domain 定义具体 BaseModel，单文件内部结构使用 dataclass。JSON 仅存在于请求、响应和数据库边界，读取后立即校验成具体类型；不以 JsonValue、字典包装或 JSON 字符串掩盖未定义的业务契约。方法内确需协议映射时使用明确的 TypedDict，不跨方法传递；不使用反射、字典 get 或猜测字段的兼容分支。
@@ -245,7 +249,7 @@ Chat Completions 适配器将开发者消息转换为 system 消息、namespace 
 
 五分钟启动指环境和接口就绪，不承诺首次授权、全部历史采集或几百页 PDF 理解五分钟完成。抽取回归使用人工核对字段和证据位置，不让模型自评代替验收。Server 事务与恢复测试使用真实临时 PG/MQ/文件，不以全 mock 证明可靠性。
 
-实现已覆盖 HTTP 契约、PG 迁移、两个应用 svc、订阅连接模块、Celery/Beat/outbox/检查点、新闻、文档 Agent、免费价格与 MCP Gateway。仅部署本地 Docker，未创建远端服务器或发布。
+实现已覆盖 HTTP 契约、PG 迁移、两个应用 svc、订阅连接模块、Celery/Beat/outbox/检查点、新闻、文档 Agent、免费价格与 MCP Gateway。业务运行于本地 Docker；公网 Tunnel 的接入状态见第 2 节。
 
 实际 Docker 验证使用 Python 3.12.15、RabbitMQ 4.3.0、PostgreSQL 18.6 与锁定依赖。Celery 禁用本项目不使用的 remote control、gossip、mingle 和事件广播，避免 RabbitMQ 4.3 已禁用的临时非独占队列。`/health/ready` 检查 PG、outbox 最近轮询、实际队列探针消费与 Beat 消息证据；`/health/live` 单独报告 API 存活。
 
@@ -293,7 +297,7 @@ Windows AMQP socket 超时采用平台分支，避免 py-amqp 的 POSIX timeval 
 
 同日锂辉石任务已通过实际 Worker 完成发现、下载、解析与入库，HTTP 和 MCP 返回 2026-10-08 澳洲 SC6 CIF 中国 1670–1720 USD/t，计算中值 1695、derived=true、发布时间20:50。除了补充日报发现，也修复了行情注册处理器向步骤函数多传参数的问题；新增真实 PG 回归从注册处理器执行到行情落库，并验证重复消息不重复采集。全套 Linux 验证 268 项通过、无跳过；最终 API Key 边界修复后 53 项相关测试通过，行情入口修复后 35 项相关测试通过。细节和实际 HTTP/MCP 结果保存在本会话 `recent-source-audit/` 输出目录。
 
-交付 CI 使用 GitHub Actions，push、pull request 和手动触发运行固定 uv/lockfile 的 Ruff 与 pytest；当前收集 273 个测试。测试 job 使用真实 PostgreSQL、RabbitMQ 和固定哈希的三份公开报告，并对独立数据库执行完整 Alembic 升级与模型差异检查。所有 skip 均视为失败；Linux PDF 资源限制、队列确认与恢复测试不得因缺少环境被计作通过。独立 Docker job 验证两个应用 svc 与基础设施健康、MCP 认证和三个官方 SDK 连接。凭据按运行生成，实际模型推理仍使用已有独立本地验收流程，不将脚本化模型响应等同真实抽取结果。
+交付 CI 使用 GitHub Actions，push、pull request 和手动触发运行固定 uv/lockfile 的 Ruff 与 pytest；当前收集 288 个测试。测试 job 使用真实 PostgreSQL、RabbitMQ 和固定哈希的三份公开报告，并对独立数据库执行完整 Alembic 升级与模型差异检查。所有 skip 均视为失败；Linux PDF 资源限制、队列确认与恢复测试不得因缺少环境被计作通过。独立 Docker job 验证两个应用 svc 与基础设施健康、MCP 认证和三个官方 SDK 连接。凭据按运行生成，实际模型推理仍使用已有独立本地验收流程，不将脚本化模型响应等同真实抽取结果。
 
 2026-10-09 已完成真实 Codex 宿主联调：本机 Codex 共享配置接入三个 Streamable HTTP MCP 入口，Codex CLI 0.162.0-alpha.2 使用 gpt-6.1-sol，根据“给我生成一份关于 Pilbara 锂矿的今日简报”自主选择三个服务的工具并生成 Markdown。业务事实仅来自 MCP 返回，输出包含新闻、分类资源量、现货与期货走势、风险和来源链接。本次验证证明 Codex 与本地 Gateway 实际兼容，不据此推断 Codex 握手协商的具体协议版本，也不替代独立通用 client 项目的实现验收。
 
