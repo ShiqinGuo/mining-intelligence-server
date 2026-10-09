@@ -1,0 +1,16 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2026.10.0
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run", "--token-file", "/run/secrets/tunnel_token"]
+    secrets:
+      - tunnel_token
+    depends_on:
+      mcp-gateway:
+        condition: service_healthy
+    mem_limit: 256m
+    pids_limit: 64
+
+secrets:
+  tunnel_token:
+    file: ${MINING_TUNNEL_TOKEN_FILE:?Set MINING_TUNNEL_TOKEN_FILE}

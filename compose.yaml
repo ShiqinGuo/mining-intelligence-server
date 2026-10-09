@@ -72,6 +72,7 @@ services:
     command: ["python", "-m", "uvicorn", "mining_gateway.app:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       MINING_BACKEND_URL: http://mining-backend:8000
+      MINING_PUBLIC_ORIGINS: ${MINING_PUBLIC_ORIGINS-[]}
       MINING_SERVICE_TOKEN: ${MINING_SERVICE_TOKEN:?Set MINING_SERVICE_TOKEN}
     ports:
       - "127.0.0.1:28111:8001"

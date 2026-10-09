@@ -4,6 +4,7 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from datetime import date
 from enum import StrEnum
 from http import HTTPStatus
+from http.client import HTTPS_PORT
 from typing import Annotated
 from uuid import UUID, uuid4
 
@@ -259,10 +260,25 @@ def create_app(
     ) -> Annotated[CallToolResult, GatewayResult[TrendResponse]]:
         return await invoke(lambda: backend.get_trend(commodity, days))
 
+    public_origins = [
+        str(origin).removesuffix("/") for origin in configuration.public_origins
+    ]
+    public_hosts = [origin.removeprefix("https://") for origin in public_origins]
+    public_hosts.extend(
+        f"{origin.host}:{origin.port}"
+        for origin in configuration.public_origins
+        if origin.port == HTTPS_PORT
+    )
     security = TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
-        allowed_hosts=["localhost:*", "127.0.0.1:*", "mcp-gateway:*", "testserver"],
-        allowed_origins=["http://localhost:*", "http://127.0.0.1:*"],
+        allowed_hosts=[
+            "localhost:*",
+            "127.0.0.1:*",
+            "mcp-gateway:*",
+            "testserver",
+            *public_hosts,
+        ],
+        allowed_origins=["http://localhost:*", "http://127.0.0.1:*", *public_origins],
     )
     routes = [
         Mount(
