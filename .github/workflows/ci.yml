@@ -57,7 +57,7 @@ jobs:
           version: '0.10.9'
           enable-cache: true
       - name: Install locked dependencies
-        run: uv sync --locked
+        run: uv sync --locked --all-packages
       - name: Lint
         run: uv run --no-sync ruff check .
       - name: Generate ephemeral application credentials
@@ -69,13 +69,13 @@ jobs:
           done
       - name: Check migrations against a separate empty database
         run: |
-          uv run --no-sync alembic upgrade head
-          uv run --no-sync alembic check
+          uv run --no-sync alembic -c apps/backend/alembic.ini upgrade head
+          uv run --no-sync alembic -c apps/backend/alembic.ini check
       - name: Cache reviewed public PDF fixtures
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
         with:
           path: ${{ runner.temp }}/mining-public-pdf-fixtures
-          key: mining-pdf-${{ runner.os }}-${{ hashFiles('tests/fixtures/document-golden.json') }}
+          key: mining-pdf-${{ runner.os }}-${{ hashFiles('apps/backend/tests/fixtures/document-golden.json') }}
       - name: Download and verify public PDF fixtures
         env:
           MINING_REPORT_FIXTURE_DIR: ${{ runner.temp }}/mining-public-pdf-fixtures
@@ -101,7 +101,7 @@ jobs:
           version: '0.10.9'
           enable-cache: true
       - name: Install locked dependencies
-        run: uv sync --locked
+        run: uv sync --locked --all-packages
       - name: Generate ephemeral application credentials
         run: uv run --no-sync python scripts/init_env.py
       - name: Build and start isolated deployment

@@ -7,9 +7,8 @@ from enum import StrEnum
 from pathlib import Path
 
 import pytest
-
+from mining_gateway.settings import GatewaySettings
 from mining_server.domain.documents import GoldenReports
-from mining_server.infrastructure.settings import Settings
 
 
 class Command(StrEnum):
@@ -74,7 +73,9 @@ async def download_fixtures(defaults: Defaults) -> None:
     if destination.is_relative_to(Path.cwd().resolve()):
         raise ValueError("CI fixtures must be outside the checkout")
     golden = GoldenReports.model_validate_json(
-        Path("tests/fixtures/document-golden.json").read_text(encoding="utf-8")
+        Path("apps/backend/tests/fixtures/document-golden.json").read_text(
+            encoding="utf-8"
+        )
     )
     destination.mkdir(parents=True, exist_ok=True)
     async with httpx.AsyncClient(
@@ -121,7 +122,7 @@ async def smoke(defaults: Defaults) -> None:
     from mcp import ClientSession
     from mcp.client.streamable_http import streamable_http_client
 
-    settings = Settings()
+    settings = GatewaySettings(_env_file=".env")
     async with httpx.AsyncClient(timeout=defaults.probe_timeout_seconds) as client:
         for url in (
             f"{defaults.backend_url}/health/live",

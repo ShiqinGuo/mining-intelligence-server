@@ -1,0 +1,19 @@
+[project]
+name = "mining-gateway"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "mining-contracts", "mcp==2.3.0", "httpx>=0.28,<1", "pydantic-settings>=2.13,<3",
+  "starlette>=0.52,<2", "uvicorn[standard]>=0.41,<1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mining_gateway"]
+
+
+[tool.ruff]
+extend = "../../pyproject.toml"

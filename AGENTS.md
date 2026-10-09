@@ -14,15 +14,15 @@
 - Use `match/case` for parallel dispatch branches. Keep independent validation guards independent.
 - Use asynchronous FastAPI endpoints and SQLAlchemy typed models and expressions. Do not write business SQL strings.
 - Use Python 3.12 parameter syntax such as `[T]`; do not use `TypeVar`.
-- Use absolute imports rooted at `mining_server`.
+- Use absolute imports rooted at `mining_server` for Backend, `mining_gateway` for Gateway, and `mining_contracts` for public contracts.
 - Define explicit Request/Response models. Use `Depends` to assemble Services and Repositories for HTTP requests. Routes must not bypass Services for business operations. Background tasks use the same explicit composition factories without invoking FastAPI dependency resolution.
 - Generate Alembic schema migrations from models, then manually review and complete data backfills. Include the date in migration filenames. Never edit released migrations.
 - Validate fields at construction and external boundaries, fail immediately on invalid input, and never silently replace invalid explicit configuration with defaults.
 
 ## 业务与执行边界
 
-- 当前唯一设计入口为根目录 `DESIGN.md`；按用户确认的范围同步契约、取舍与验收证据，不另建重复设计。
-- 实现独立矿业业务 HTTP 服务与 MCP Gateway。Gateway 只通过具名异步 HTTP Client 调用业务 API，不共享 ORM、业务数据库或模型凭据。
+- 根目录仅保留 `README.md` 与 `AGENTS.md`；其他开发文档统一在 `docs/` 维护。当前唯一设计入口为 `docs/DESIGN.md`；按用户确认的范围同步契约、取舍与验收证据，不另建重复设计。
+- 实现独立矿业业务 HTTP 服务与 MCP Gateway。Backend 在 `apps/backend`、Gateway 在 `apps/mcp_gateway`，各自维护源码、测试、依赖与 Dockerfile。Gateway 只通过具名异步 HTTP Client 调用业务 API，不导入后端实现，不共享 ORM、业务数据库或模型凭据。`packages/contracts` 只维护公开 HTTP 模型、错误响应及相关枚举，不导入任一服务；根 uv workspace 统一锁定依赖，各镜像只安装本服务的依赖闭包。
 - 两个应用 svc 为 MCP Gateway 与业务后端；后端管理 FastAPI、Celery worker、单实例 Beat。PostgreSQL、RabbitMQ 为基础设施，另计。开发先在本地 Docker 验收，未经请求不创建或发布远端资源。
 - PostgreSQL 是业务、任务、步骤结果、模型执行记录与检查点的事实来源。Celery 执行，Beat 定时调度，RabbitMQ 传递任务；首版不引入 Redis，其他中间件先与用户讨论。
 - 采用显式 workflow + LLM 和有界文档 Agent，编排自行实现，不使用 LangChain/LangGraph。协议、模型、TUI 等参考项目的机制可借鉴，不复制其全局状态、宽泛异常兜底或无消费者兼容层。

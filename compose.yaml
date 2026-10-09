@@ -30,7 +30,9 @@ services:
       timeout: 5s
       retries: 20
   mining-backend:
-    build: .
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
     restart: on-failure
     stop_grace_period: 30s
     mem_limit: 2g
@@ -60,12 +62,14 @@ services:
       timeout: 6s
       retries: 12
   mcp-gateway:
-    build: .
+    build:
+      context: .
+      dockerfile: apps/mcp_gateway/Dockerfile
     restart: on-failure
     mem_limit: 512m
     memswap_limit: 512m
     pids_limit: 128
-    command: ["python", "-m", "uvicorn", "mining_server.gateway.app:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8001"]
+    command: ["python", "-m", "uvicorn", "mining_gateway.app:app_factory", "--factory", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       MINING_BACKEND_URL: http://mining-backend:8000
       MINING_SERVICE_TOKEN: ${MINING_SERVICE_TOKEN:?Set MINING_SERVICE_TOKEN}
